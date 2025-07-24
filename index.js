@@ -7,10 +7,20 @@ const mongoose = require("mongoose");
 const adminRoute = require("./routes/userRoute.js");
 const shopRoute = require("./routes/shopRoute.js");
 const formRoute = require("./routes/formRoute.js");
+const User      = require("./models/User.js");
 
 mongoose.connect("mongodb://localhost:27017/ourShop");
 
 function MyMiddleWare(req, res, next){
+    const cookie =typeof req.cookies == "string" ? JSON.parse( req.cookies) : req.cookies;
+    
+    if( cookie?.loginId ){
+        const user = User.find(cookie.loginId);
+
+        if( user ){
+            req.user = user;
+        }
+    }
     next();
 }
 
@@ -23,7 +33,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());//default 
 app.use(express.urlencoded());
 app.use(MyMiddleWare);
-app.use("/admin/:user_id", adminRoute);
+app.use("/admin", adminRoute);
 app.use("/form", formRoute);
 app.use("/product", shopRoute);
 
@@ -33,12 +43,6 @@ app.get("/", (req, res)=>{
     res.render("base", query);
 });
 
-app.get('/login', (req, res)=>{
-    const variable = ["one", "two", "three", "four", "five"];
-    res.render("login", {
-        arr_guard:variable
-    });
-});
 app.listen(port, hostname, ()=>{
     console.log(`Server Running on http://${hostname}:${port}`);
 });
