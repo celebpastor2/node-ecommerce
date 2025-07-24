@@ -10,15 +10,25 @@ router.get('/:form', (req, res)=>{
 router.post('/:action', (req, res)=>{
     const {action} = req.params;
     const Inputs = req.body;
-    const form = new Form({
-        inputs: Inputs,
-        action,
-    });
-    form.save();
-    res.redirect(`/form/thank-you/${action}`);
+    try {
+        const form = new Form({
+            inputs: Inputs,
+            action,
+        });
+        form.save();
+        res.redirect(`/form/thank-you/${action}`);
+    } catch (e){
+        res.redirect(`/form/error/${action}`);
+    }
+    
 });
 
 router.get("/thank-you/:action", (req, res)=>{
 
+});
+
+router.get("/error/:action", (req, res)=>{
+    const {action} = req.params;
+    res.render("error");
 });
 
