@@ -18,3 +18,6 @@ router.get('/shop/:id', (req, res)=>{
         "products":products
     });
 });
+
+
+module.exports = router;

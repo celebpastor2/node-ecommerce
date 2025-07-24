@@ -39,7 +39,4 @@ UserSchema.methods.deductBalance = function(value){
    this.addBalance(-value);
 }
 
-module.exports = mongoose.Model("User", UserSchema);
-
-const user = UserSchema.findById(id);
-user.addBalance()
+module.exports = mongoose.model("User", UserSchema);

@@ -11,4 +11,4 @@ const ProductSchema = new mongoose.Schema({
      
 });
 
-module.exports = mongoose.Model("Forms", ProductSchema);
+module.exports = mongoose.model("Forms", ProductSchema);

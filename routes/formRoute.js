@@ -32,3 +32,5 @@ router.get("/error/:action", (req, res)=>{
     res.render("error");
 });
 
+module.exports = router;
+
