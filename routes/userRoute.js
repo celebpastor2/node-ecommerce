@@ -2,6 +2,8 @@ const express = require("express");
 const User      = require('../models/User');
 const route = express.Router();
 const bcrypt = require("bcrypt");
+const UserAuthCheck = require("../middlewares/UserAuthCheck");
+const router = require("./shopRoute");
 
 function userMiddleware(req, res, next){
     next();
@@ -11,19 +13,24 @@ route.get('/login', userMiddleware, (req, res)=>{
     res.render("login");
 });
 
+route.get('/dashboard', UserAuthCheck, (req, res)=>{
+    const user = req.user;
+    res.render("dashboard", {user});
+});
+
 route.post('/login',(req, res)=>{
     const {username, password} = req.body;
-    const user = User.find({username});
+    const user = User.findOne({username});
 
     if( user && user.username && user.password ){
-        if(  bcrypt.compareSync( user.password, password)){
-            res.cookie("loginId", user._id );
-            res.cookie("userToken", token, 
-                {
-                    maxAge: Date.now() + (3600 * 24 * 3)
-                }
-            )
-            res.redirect("/dashboard");
+        const isMatched = user.verifyPassword(password);
+        if(  isMatched ){
+           const token = user.getJsonWebToken();
+           const option = {
+            expires: Date.now() + (60 * 60 * 24 * 1000 ), //1 day
+            httpOnly: true,
+           };
+            res.status(200).cookie('token', token, option).redirect("/dashboard");
         } else {
             res.send("password incorrect")
         }
@@ -40,7 +47,7 @@ route.post('/register', (req, res)=>{
 
     try {
 
-        const checkUser = User.find({username});
+        const checkUser = User.findOne({username});
 
         if( checkUser && checkUser?.username && checkUser?.username == username ){
             res.status(300).json({
@@ -51,14 +58,19 @@ route.post('/register', (req, res)=>{
 
         const user = new User({
             username:username,
-            password:bcrypt.hashSync( password, 10 ),
-            email:email
+            password,
+            email,
         });
         user.save();
 
         if( user && user.username ){
-            res.cookie("loginId", user._id);
-            res.json({user:user});
+            const token = user.getJsonWebToken();
+            user.sendNotification("register");
+
+            res.cookie("token", token, {
+                httpOnly:true,
+                expires: Date.now() + (60 * 60 * 24 * 1000)
+            }).redirect("/dashboard");
         } else {        
             res.status(200).json({
                 error: "Registeration Failed",
